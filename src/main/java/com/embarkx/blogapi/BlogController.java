@@ -51,6 +51,14 @@ public class BlogController {
         return ResponseEntity.notFound().build();
     }
 
+    @GetMapping("/search")
+    public List<Post> searchPosts(@RequestParam String keyword) {
+        String lowerKeyword = keyword.toLowerCase();
+        return posts.stream()
+                .filter(p -> p.getTitle().toLowerCase().contains(lowerKeyword))
+                .collect(java.util.stream.Collectors.toList());
+    }
+
     @GetMapping("/total")
     public String getTotalWordCount() {
         List<String> wordCounts = List.of("100", "200", "300");

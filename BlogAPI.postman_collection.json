@@ -232,6 +232,58 @@
           "protocol": "http"
         }
       }
+    },
+    {
+      "name": "Search Posts By Title",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/posts/search?keyword=first",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "posts",
+            "search"
+          ],
+          "query": [
+            {
+              "key": "keyword",
+              "value": "first"
+            }
+          ],
+          "protocol": "http"
+        }
+      }
+    },
+    {
+      "name": "Search Posts By Title - No Match (returns empty list)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/posts/search?keyword=doesnotexist",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "posts",
+            "search"
+          ],
+          "query": [
+            {
+              "key": "keyword",
+              "value": "doesnotexist"
+            }
+          ],
+          "protocol": "http"
+        }
+      }
     }
   ],
   "variable": [
