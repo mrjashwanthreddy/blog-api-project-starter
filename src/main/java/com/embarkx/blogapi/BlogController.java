@@ -1,9 +1,9 @@
 package com.embarkx.blogapi;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -11,61 +11,63 @@ import java.util.UUID;
 @RequestMapping("/api/posts")
 public class BlogController {
 
-    private static final List<Post> posts = new ArrayList<>();
+    private final PostService postService;
+
+    public BlogController(PostService postService) {
+        this.postService = postService;
+    }
+
+    // -------------------------------------------------------------------------
+    // Endpoints
+    // -------------------------------------------------------------------------
 
     @PostMapping
-    public ResponseEntity<Post> createPost(@RequestParam String title, @RequestParam String content) {
-        Post post = new Post(title, content);
-        posts.add(post);
-        return ResponseEntity.ok(post);
+    public ResponseEntity<Post> createPost(@RequestParam String title,
+                                           @RequestParam String content) {
+        Post created = postService.createPost(title, content);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @GetMapping
-    public List<Post> getAllPosts() {
-        return posts;
+    public ResponseEntity<List<Post>> getAllPosts() {
+        return ResponseEntity.ok(postService.getAllPosts());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Post> getPost(@PathVariable UUID id) {
-        return posts.stream()
-                .filter(p -> p.getId().equals(id))
-                .findFirst()
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(postService.getPostById(id));
     }
 
-    @PostMapping("/validate")
-    public String validateContent(@RequestParam String content) {
-        if (content.length() > 5000) {
-            return "Too long";
-        }
-        return "OK";
+    @PutMapping("/{id}")
+    public ResponseEntity<Post> updatePost(@PathVariable UUID id,
+                                           @RequestParam String title,
+                                           @RequestParam String content) {
+        return ResponseEntity.ok(postService.updatePost(id, title, content));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deletePost(@PathVariable UUID id) {
-        boolean removed = posts.removeIf(p -> p.getId().equals(id));
-        if (removed) {
-            return ResponseEntity.ok("Deleted");
-        }
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<Void> deletePost(@PathVariable UUID id) {
+        postService.deletePost(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/search")
-    public List<Post> searchPosts(@RequestParam String keyword) {
-        String lowerKeyword = keyword.toLowerCase();
-        return posts.stream()
-                .filter(p -> p.getTitle().toLowerCase().contains(lowerKeyword))
-                .collect(java.util.stream.Collectors.toList());
+    public ResponseEntity<List<Post>> searchPosts(@RequestParam String keyword) {
+        return ResponseEntity.ok(postService.searchByTitle(keyword));
     }
 
-    @GetMapping("/total")
-    public String getTotalWordCount() {
-        List<String> wordCounts = List.of("100", "200", "300");
-        String total = "";
-        for (String count : wordCounts) {
-            total += count;
-        }
-        return "Total words: " + total;
+    // -------------------------------------------------------------------------
+    // Exception handlers
+    // -------------------------------------------------------------------------
+
+    @ExceptionHandler(PostNotFoundException.class)
+    public ResponseEntity<String> handleNotFound(PostNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
-}
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleBadRequest(IllegalArgumentException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+}
+
