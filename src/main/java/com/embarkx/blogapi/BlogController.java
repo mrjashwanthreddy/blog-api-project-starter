@@ -1,30 +1,37 @@
 package com.embarkx.blogapi;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/posts")
 public class BlogController {
 
-    private static List<String> posts = new ArrayList<>();
+    private static final List<Post> posts = new ArrayList<>();
 
     @PostMapping
-    public String createPost(@RequestParam String title, @RequestParam String content) {
-        String post = title + ":" + content;
+    public ResponseEntity<Post> createPost(@RequestParam String title, @RequestParam String content) {
+        Post post = new Post(title, content);
         posts.add(post);
-        return "Post created";
+        return ResponseEntity.ok(post);
     }
 
     @GetMapping
-    public List<String> getAllPosts() {
+    public List<Post> getAllPosts() {
         return posts;
     }
 
     @GetMapping("/{id}")
-    public String getPost(@PathVariable int id) {
-        return posts.get(id);
+    public ResponseEntity<Post> getPost(@PathVariable UUID id) {
+        return posts.stream()
+                .filter(p -> p.getId().equals(id))
+                .findFirst()
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping("/validate")
@@ -36,18 +43,21 @@ public class BlogController {
     }
 
     @DeleteMapping("/{id}")
-    public String deletePost(@PathVariable int id) {
-        posts.remove(id);
-        return "Deleted";
+    public ResponseEntity<String> deletePost(@PathVariable UUID id) {
+        boolean removed = posts.removeIf(p -> p.getId().equals(id));
+        if (removed) {
+            return ResponseEntity.ok("Deleted");
+        }
+        return ResponseEntity.notFound().build();
     }
 
-@GetMapping("/total")
-public String getTotalWordCount() {
-    List<String> wordCounts = List.of("100", "200", "300");
-    String total = "";
-    for (String count : wordCounts) {
-        total += count;
+    @GetMapping("/total")
+    public String getTotalWordCount() {
+        List<String> wordCounts = List.of("100", "200", "300");
+        String total = "";
+        for (String count : wordCounts) {
+            total += count;
+        }
+        return "Total words: " + total;
     }
-    return "Total words: " + total;
-}
-}
+}
